@@ -1,0 +1,5 @@
+{
+    "python.pythonPath": "/usr/local/bin/python",
+    "editor.formatOnSave": true,
+    "code-runner.preserveFocus": false
+}
