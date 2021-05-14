@@ -1,6 +1,4 @@
 # author:  Taichicchi
-# created: 12.05.2021 22:42:03
+# created: 14.05.2021 20:07:03
 
 import sys
-
-print("Hello World!")
