@@ -12,7 +12,7 @@ def factorization(n):
     if temp != 1:
         arr.append([temp, 1])
 
-    if arr == []:
+    if len(arr) == 0:
         arr.append([n, 1])
 
     return arr
