@@ -1,8 +1,9 @@
 from heapq import heappush, heappop
-INF = 10 ** 9
+INF = 1 << 64
 
 
-def dijkstra(s, n):  # (始点, ノード数)
+def dijkstra(s, adj):  # (始点, adj)
+    n = len(adj)
     dist = [INF] * n
     hq = [(0, s)]  # (distance, node)
     dist[s] = 0
@@ -10,7 +11,7 @@ def dijkstra(s, n):  # (始点, ノード数)
     while hq:
         v = heappop(hq)[1]  # ノードを pop する
         seen[v] = True
-        for to, cost in adj[v]:  # ノード v に隣接しているノードに対して
+        for cost, to in adj[v]:  # ノード v に隣接しているノードに対して
             if seen[to] == False and dist[v] + cost < dist[to]:
                 dist[to] = dist[v] + cost
                 heappush(hq, (dist[to], to))
