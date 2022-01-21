@@ -4,8 +4,8 @@ class DSU:
         self.parent_or_size = [-1] * n
 
     def merge(self, a, b):
-        assert 0 <= a < self._n
-        assert 0 <= b < self._n
+        assert 0 <= a < self._n, f"a = {a} is not valid."
+        assert 0 <= b < self._n, f"b = {b} is not valid."
         x, y = self.leader(a), self.leader(b)
         if x == y:
             return x
@@ -16,19 +16,19 @@ class DSU:
         return x
 
     def same(self, a, b):
-        assert 0 <= a < self._n
-        assert 0 <= b < self._n
+        assert 0 <= a < self._n, f"a = {a} is not valid."
+        assert 0 <= b < self._n, f"b = {b} is not valid."
         return self.leader(a) == self.leader(b)
 
     def leader(self, a):
-        assert 0 <= a < self._n
+        assert 0 <= a < self._n, f"a = {a} is not valid."
         if self.parent_or_size[a] < 0:
             return a
         self.parent_or_size[a] = self.leader(self.parent_or_size[a])
         return self.parent_or_size[a]
 
     def size(self, a):
-        assert 0 <= a < self._n
+        assert 0 <= a < self._n, f"a = {a} is not valid."
         return -self.parent_or_size[self.leader(a)]
 
     def groups(self):

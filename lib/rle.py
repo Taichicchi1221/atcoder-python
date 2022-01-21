@@ -1,5 +1,7 @@
-# Run Length Encoding
 def rle(s):
+    """
+    Run Length Encoding
+    """
     tmp, count = s[0], 1
     ret = []
     for i in range(1, len(s)):
