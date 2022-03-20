@@ -1,5 +1,10 @@
 {
     "python.pythonPath": "/usr/local/bin/python",
     "editor.formatOnSave": true,
-    "code-runner.preserveFocus": false
+    "code-runner.preserveFocus": false,
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.runInTerminal": true,
+    "docker.languageserver.formatter.ignoreMultilineInstructions": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true
 }

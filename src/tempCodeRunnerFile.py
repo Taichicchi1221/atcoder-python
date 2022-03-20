@@ -1,1 +1,1 @@
-print(adj)
+1
