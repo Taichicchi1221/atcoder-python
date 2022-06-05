@@ -10,5 +10,5 @@ for i in range(100):
     START = perf_counter()
     subprocess.run(f"python ahc.py < {filepath}", shell=True)
     END = perf_counter()
-
-    print(f"{END - START: .4f} sec")
+    elapsed = END - START
+    print(f"{elapsed:.4f} sec")

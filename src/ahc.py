@@ -1,24 +1,18 @@
 # author:  Taichicchi
 # created: 28.05.2022 12:00:00
 
-from collections import Counter, deque
+from operator import xor
 import os
 import sys
 import copy
 import random
 import re
 import math
+from collections import Counter, deque
 from itertools import product, combinations
 from time import perf_counter
 
 sys.setrecursionlimit(10**6)
-
-try:
-    import pypyjit
-
-    pypyjit.set_param("max_unroll_recursion=-1")
-except ModuleNotFoundError:
-    pass
 
 INF = 1 << 64
 
@@ -370,6 +364,7 @@ class Sim(object):
     def operate(self, i, j, i2, j2):
         """
         i, jにあるtileをi2, j2に移動してfixする
+        0マスを(N - 1, N - 1)に移動する
         """
 
         if i == i2 and j == j2:
@@ -389,12 +384,17 @@ class Sim(object):
 
         self.fixed[i2][j2] = 1
 
+        # self.move_0(self.N - 1, self.N - 1)
+
         return 0
 
     def operate2(self, gi, gj, t):
         """
         gi, gjに一番近いかつunfixedなtをセットする
         """
+        if self.tiles[gi][gj] == t:
+            return 0
+
         deq = deque([(gi, gj)])
         arr = [[0] * self.N for _ in range(self.N)]
 
@@ -414,6 +414,13 @@ class Sim(object):
 
                 deq.append((i2, j2))
 
+        # for i in range(gi, self.N):
+        #     for j in range(gj, self.N):
+        #         if self.fixed[i][j]:
+        #             continue
+        #         if self.tiles[i][j] == t:
+        #             return self.operate(i, j, gi, gj)
+
         return -1
 
     # def operate3(gi1, gj1, t1, gi2, gj2, t2):
@@ -426,7 +433,6 @@ class Sim(object):
     #     if abs(gi1 - gi2) == 1:
 
     #     elif abs(gj1 - gj2) == 1:
-
     #     else:
     #         raise NotImplementedError("(^ω^#)")
 
@@ -472,36 +478,92 @@ def compute_dsu_maxtree_bs(inputs, tiles):
     return dsu, max_tree, bs
 
 
-def check_connect(t1, t2, i, j, i2, j2):
+def check_connect(t1, t2, i1, j1, i2, j2):
+    assert t1 != 0 and t2 != 0
+    assert xor(abs(i1 - i2) == 1, abs(j1 - j2) == 1)
+    # (つながってない)
+    # 条件1
+    b11 = t1 & 8 == 0 and t2 & 2 == 0
+    b12 = i1 - i2 == -1 and j1 - j2 == 0
+    if b11 and b12:
+        # print(f"1n: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
+        return True
+
+    # 条件2
+    b21 = t1 & 2 == 0 and t2 & 8 == 0
+    b22 = i1 - i2 == 1 and j1 - j2 == 0
+    if b21 and b22:
+        # print(f"2n: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
+        return True
+
+    # 条件3
+    b31 = t1 & 4 == 0 and t2 & 1 == 0
+    b32 = i1 - i2 == 0 and j1 - j2 == -1
+    if b31 and b32:
+        # print(f"3n: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
+        return True
+
+    # 条件4
+    b41 = t1 & 1 == 0 and t2 & 4 == 0
+    b42 = i1 - i2 == 0 and j1 - j2 == 1
+    if b41 and b42:
+        # print(f"4n: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
+        return True
+
+
+    # (つながってる)
     # 条件1
     b11 = t1 & 8 != 0 and t2 & 2 != 0
-    b12 = i - i2 == -1 and j - j2 == 0
+    b12 = i1 - i2 == -1 and j1 - j2 == 0
     if b11 and b12:
+        # print(f"1: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
         return True
 
     # 条件2
     b21 = t1 & 2 != 0 and t2 & 8 != 0
-    b22 = i - i2 == 1 and j - j2 == 0
+    b22 = i1 - i2 == 1 and j1 - j2 == 0
     if b21 and b22:
+        # print(f"2: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
         return True
 
     # 条件3
     b31 = t1 & 4 != 0 and t2 & 1 != 0
-    b32 = i - i2 == 0 and j - j2 == -1
+    b32 = i1 - i2 == 0 and j1 - j2 == -1
     if b31 and b32:
+        # print(f"3: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
         return True
 
     # 条件4
     b41 = t1 & 1 != 0 and t2 & 4 != 0
-    b42 = i - i2 == 0 and j - j2 == 1
+    b42 = i1 - i2 == 0 and j1 - j2 == 1
     if b41 and b42:
+        # print(f"4: {t1=}, {i1=}, {j1=}, {t2=}, {i2=}, {j2=}", file=sys.stderr)
         return True
 
     return False
 
-
-def is_able_to_use_tile(tiles, i, j, t):
+def check_full_connect(t, i, j, tiles, fixed):
     N = len(tiles)
+    assert tiles[i][j] == 0
+
+    for idx, (di, dj) in enumerate(DIJ):
+        i2 = i + di
+        j2 = j + dj
+        if not (0 <= i2 < N and 0 <= j2 < N):
+            continue
+
+        # 0に続いているならskip
+        if tiles[i2][j2] == 0:
+            continue
+
+        # (i2, j2)が固定でconnectしていないならFalse
+        if fixed[i2][j2] and not check_connect(t, tiles[i2][j2], i, j, i2, j2):
+            return False
+
+    return True
+
+
+def is_able_to_use_tile(N, i, j, t):
     if i == j == 0 and t not in (4, 8, 12):
         return False
     if i == j == N - 1 and t not in (1, 2, 3):
@@ -512,25 +574,15 @@ def is_able_to_use_tile(tiles, i, j, t):
     if i == N - 1 and j == 0 and t not in (2, 4, 6):
         return False
 
-    if i == 0 and (t >> 1) & 1 == 1:
+    if j == 0 and t & 1 != 0:
         return False
-    if j == 0 and (t >> 0) & 1 == 1:
-        return False
-
-    if i == N - 1 and (t >> 3) & 1 == 1:
-        return False
-    if j == N - 1 and (t >> 2) & 1 == 1:
+    if i == 0 and t & 2 != 0:
         return False
 
-    for di, dj in DIJ:
-        i2 = i + di
-        j2 = j + dj
-        if not (0 <= i2 < N and 0 <= j2 < N):
-            continue
-        if tiles[i2][j2] == 0:
-            continue
-        if not check_connect(t, tiles[i2][j2], i, j, i2, j2):
-            return False
+    if j == N - 1 and t & 4 != 0:
+        return False
+    if i == N - 1 and t & 8 != 0:
+        return False
 
     return True
 
@@ -617,33 +669,38 @@ class Inputs:
         self.tiles = copy.deepcopy(tiles)
 
 
-def postprocess(inputs, outputs):
-    while True:
-        outputs = re.sub("UD|DU|LR|RL", "", outputs)
-
-        if not re.search("UD|DU|LR|RL", outputs):
-            break
+def postprocess(inputs, outputs, TIME_LIMIT):
+    START = perf_counter()
+    N = inputs.N
+    T = inputs.T
 
     max_score = 0
     max_return = None
-    for i in range(1, len(outputs) + 1):
+    i = len(outputs)
+
+    while perf_counter() - START < TIME_LIMIT:
         score, _, _ = compute_score(inputs, outputs[:i])
         if score > max_score or max_return is None:
             max_score = score
             max_return = outputs[:i]
+        
+        i -= 1
 
     return max_return
 
 
-def step_simulate_tiles(inputs):
+def dfs_simulate_tiles(inputs):
     N = inputs.N
     tiles = [[0] * N for _ in range(N)]
     counter = Counter(sum(inputs.tiles, []))
     counter[0] = 0
 
-    t = 12
+    t = random.choice([k for k in (4, 8, 12) if counter[k]])
+    # t = max([k for k in (4, 8, 12) if counter[k]])
 
     ls = [(0, 0, t)]
+    counter[t] -= 1
+
     arr = [[0] * N for _ in range(N)]
     arr[N - 1][N - 1] = 1
 
@@ -651,9 +708,10 @@ def step_simulate_tiles(inputs):
         i, j, k = ls.pop()
         arr[i][j] = 1
         tiles[i][j] = k
-        counter[k] -= 1
 
-        for di, dj in DIJ:
+        for idx, (di, dj) in enumerate(DIJ):
+            if (k >> idx) & 1 == 0:
+                continue
             i2 = i + di
             j2 = j + dj
             if not (0 <= i2 < N and 0 <= j2 < N):
@@ -661,21 +719,161 @@ def step_simulate_tiles(inputs):
             if arr[i2][j2]:
                 continue
 
-            keys = [
-                t
-                for t in counter.keys()
-                if counter[t]
-                and check_connect(k, t, i, j, i2, j2)
-                and is_able_to_use_tile(tiles, i2, j2, t)
-            ]
+            keys = []
+            for key in range(1, 16):
+                if counter[key] <= 0:
+                    continue
+                if not is_able_to_use_tile(N, i2, j2, key):
+                    continue
+                if check_full_connect(key, i2, j2, tiles, arr):
+                    keys.append(key)
+
             if not keys:
                 continue
-
+            
             t = random.choice(keys)
+            # t = max(keys)
+
             ls.append((i2, j2, t))
+            counter[t] -= 1
+        
 
     dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
-    size = 0 if max_tree == -1 else dsu.size(max_tree)
+    size = 0
+    for i in range(N - 1):
+        for j in range(N - 1):
+            size += bs[i][j]
+
+    return tiles, size
+
+
+def bfs_simulate_tiles(inputs, type_ = "random"):
+    N = inputs.N
+    tiles = [[0] * N for _ in range(N)]
+    counter = Counter(sum(inputs.tiles, []))
+    counter[0] = 0
+
+    t = random.choice([k for k in (4, 8, 12) if counter[k]])
+    # t = max([k for k in (4, 8, 12) if counter[k]])
+
+    ls = deque([(0, 0, t, 1)])
+    counter[t] -= 1
+
+    depth = [[0] * N for _ in range(N)]
+    depth[N - 1][N - 1] = 1 << 16
+
+    while ls:
+        i, j, k, d = ls.popleft()
+        depth[i][j] = d
+        tiles[i][j] = k
+
+        for idx, (di, dj) in enumerate(DIJ):
+            if (k >> idx) & 1 == 0:
+                continue
+            i2 = i + di
+            j2 = j + dj
+            if not (0 <= i2 < N and 0 <= j2 < N):
+                continue
+            if depth[i2][j2]:
+                continue
+
+            keys = []
+            for key in range(1, 16):
+                if counter[key] <= 0:
+                    continue
+                if not is_able_to_use_tile(N, i2, j2, key):
+                    continue
+                if check_full_connect(key, i2, j2, tiles, depth):
+                    keys.append(key)
+            
+            
+            if not keys:
+                dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
+                size = 0
+                for i in range(N - 1):
+                    for j in range(N - 1):
+                        size += bs[i][j]
+                return tiles, size
+
+            t = random.choice(keys)
+            # t = max(keys)
+
+            ls.append((i2, j2, t, d + 1))
+            counter[t] -= 1
+
+    dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
+    size = 0
+    for i in range(N - 1):
+        for j in range(N - 1):
+            size += bs[i][j]
+
+
+    return tiles, size
+
+def simulate_tiles(inputs):
+    N = inputs.N
+    tiles = [[0] * N for _ in range(N)]
+    fixed = [[0] * N for _ in range(N)]
+    counter = Counter(sum(inputs.tiles, []))
+    counter[0] = 0
+
+    for i in range(N):
+        keys = [k for k in counter.keys() if counter[k] and is_able_to_use_tile(N, i, 0, k) and check_full_connect(k, i, 0, tiles, fixed)]
+        if not keys:
+            dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
+            size = 0
+            for i in range(N - 1):
+                for j in range(N - 1):
+                    size += bs[i][j]
+
+            return tiles, size
+        t = random.choice(keys)
+        tiles[i][0] = t
+        fixed[i][0] = 1
+        counter[t] -= 1
+
+    for j in range(1, N):
+        keys = [k for k in counter.keys() if counter[k] and is_able_to_use_tile(N, 0, j, k) and check_full_connect(k, 0, j, tiles, fixed)]
+        if not keys:
+            dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
+            size = 0
+            for i in range(N - 1):
+                for j in range(N - 1):
+                    size += bs[i][j]
+
+            return tiles, size
+        t = random.choice(keys)
+        tiles[0][j] = t
+        fixed[0][j] = 1
+        counter[t] -= 1
+
+    for i in range(1, N):
+        for j in range(1, N):
+            keys = []
+            for k in range(16):
+                connected =  check_full_connect(k, i, j, tiles, fixed)
+                if counter[k] and connected and is_able_to_use_tile(N, i, j, k):
+                    keys.append(k)
+            if not keys:
+                dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
+                size = 0
+                for i in range(N - 1):
+                    for j in range(N - 1):
+                        size += bs[i][j]
+
+                return tiles, size
+
+            t = random.choice(keys)
+            tiles[i][j] = t
+            fixed[i][j] = 1
+            counter[t] -= 1
+
+    dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
+    size = 0
+    for i in range(N - 1):
+        for j in range(N - 1):
+            size += bs[i][j]
+
     return tiles, size
 
 
@@ -691,11 +889,14 @@ def get_selection_priority(inputs):
 
 
 def main():
+    N, T = map(int, input().split())
+    tiles = [list(map(lambda x: int(x, base=16), list(input()))) for _ in range(N)]
+
+    print(f"N: {N}", file=sys.stderr)
+
     START = perf_counter()
     random.seed(1221)
 
-    N, T = map(int, input().split())
-    tiles = [list(map(lambda x: int(x, base=16), list(input()))) for _ in range(N)]
     counter = Counter(sum(tiles, []))
 
     inputs = Inputs(N, T, tiles)
@@ -704,14 +905,15 @@ def main():
 
     max_sim_tiles = None
     max_size = 0
-    for _ in range(5000):
-        sim_tiles, size = step_simulate_tiles(inputs)
+
+    while perf_counter() - START < 1.5:
+        sim_tiles, size = bfs_simulate_tiles(inputs)
         if size >= max_size:
             max_size = size
             max_sim_tiles = sim_tiles
 
-    selection_priority = get_selection_priority(inputs)
 
+    selection_priority = get_selection_priority(inputs)
     print("#" * 30, file=sys.stderr)
     print(
         *["".join(map(lambda x: hex(x)[2], t)) for t in max_sim_tiles],
@@ -722,10 +924,21 @@ def main():
         if max_sim_tiles[i][j] == 0:
             continue
         sim.operate2(i, j, max_sim_tiles[i][j])
-        sim.fixed[i][j] = 1
+
+    print("#" * 30, file=sys.stderr)
+    print(
+        *["".join(map(lambda x: hex(x)[2], t)) for t in sim.tiles],
+        sep="\n",
+        file=sys.stderr,
+    )
+
+    assert sim.turn == len(sim.move_str)
 
     outputs = sim.get_move_str()
-    outputs = postprocess(inputs, outputs)
+    print(f"before postprocess:", file=sys.stderr)
+    print(outputs, file=sys.stderr)
+    outputs = postprocess(inputs, outputs, TIME_LIMIT=0.5)
+    print("#" * 30, file=sys.stderr)
     print(outputs)
     score, _, _ = compute_score(inputs, outputs)
     print(f"score: {score}", file=sys.stderr)
