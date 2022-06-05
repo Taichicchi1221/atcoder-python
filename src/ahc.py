@@ -313,10 +313,7 @@ class Sim(object):
         for c in move_str:
             self.apply(c)
 
-        if self.i != i or self.j != j:
-            return -1
-        else:
-            return move_str
+        return move_str
 
     def move_x(self, i, j, c):
         """
@@ -384,7 +381,7 @@ class Sim(object):
 
         self.fixed[i2][j2] = 1
 
-        # self.move_0(self.N - 1, self.N - 1)
+        self.move_0(self.N - 1, self.N - 1)
 
         return 0
 
@@ -392,49 +389,76 @@ class Sim(object):
         """
         gi, gjに一番近いかつunfixedなtをセットする
         """
+        # print(f"call operate2", file=sys.stderr)
+
         if self.tiles[gi][gj] == t:
             return 0
 
-        deq = deque([(gi, gj)])
-        arr = [[0] * self.N for _ in range(self.N)]
+        # deq = deque([(gi, gj)])
+        # arr = [[0] * self.N for _ in range(self.N)]
 
-        while deq:
-            i, j = deq.popleft()
-            arr[i][j] = 1
-            for di, dj in DIJ:
-                i2 = i + di
-                j2 = j + dj
-                if not (0 <= i2 < self.N and 0 <= j2 < self.N):
-                    continue
-                if arr[i2][j2]:
-                    continue
-
-                if self.tiles[i2][j2] == t and self.fixed[i2][j2] == 0:
-                    return self.operate(i2, j2, gi, gj)
-
-                deq.append((i2, j2))
-
-        # for i in range(gi, self.N):
-        #     for j in range(gj, self.N):
-        #         if self.fixed[i][j]:
+        # while deq:
+        #     i, j = deq.popleft()
+        #     arr[i][j] = 1
+        #     for di, dj in DIJ:
+        #         i2 = i + di
+        #         j2 = j + dj
+        #         if not (0 <= i2 < self.N and 0 <= j2 < self.N):
         #             continue
-        #         if self.tiles[i][j] == t:
-        #             return self.operate(i, j, gi, gj)
+        #         if arr[i2][j2]:
+        #             continue
+
+        #         if self.tiles[i2][j2] == t and self.fixed[i2][j2] == 0:
+        #             return self.operate(i2, j2, gi, gj)
+
+        #         deq.append((i2, j2))
+
+        for i in range(self.N):
+            for j in range(self.N):
+                if self.fixed[i][j]:
+                    continue
+                if self.tiles[i][j] == t:
+                    return self.operate(i, j, gi, gj)
 
         return -1
 
-    # def operate3(gi1, gj1, t1, gi2, gj2, t2):
-    #     """
-    #     端っこ部分を2つ一気にそろえる
-    #     """
-    #     assert gi1 <= gi2 and gj1 <= gj2
-    #     assert gi1 == gi2 or gj1 == gj2
+    def operate3(self, gi1, gj1, t1, gi2, gj2, t2):
+        """
+        端っこ部分を2つ一気にそろえる
+        """
+        # print(f"call operate3", file=sys.stderr)
 
-    #     if abs(gi1 - gi2) == 1:
+        assert gi1 <= gi2 and gj1 <= gj2
+        assert gi1 == gi2 or gj1 == gj2
 
-    #     elif abs(gj1 - gj2) == 1:
-    #     else:
-    #         raise NotImplementedError("(^ω^#)")
+        if abs(gi1 - gi2) == 1:
+            assert gj1 == gj2
+
+            self.operate2(gi1, gj1, t2)
+            self.operate2(gi1, gj1 + 1, t1)
+            self.move_0(gi2, gj2)
+            self.fixed[gi1][gj1] = 0
+            self.fixed[gi1][gj1 + 1] = 0
+            self.move_0(gi1, gj1)
+            self.move_0(gi1, gj1 + 1)
+            self.fixed[gi1][gj1] = 1
+            self.fixed[gi2][gj2] = 1
+
+        elif abs(gj1 - gj2) == 1:
+            assert gi1 == gi2
+
+            self.operate2(gi1, gj1, t2)
+            self.operate2(gi1 + 1, gj1, t1)
+            self.move_0(gi2, gj2)
+            self.fixed[gi1][gj1] = 0
+            self.fixed[gi1 + 1][gj1] = 0
+            self.move_0(gi1, gj1)
+            self.move_0(gi1 + 1, gj1)
+            self.fixed[gi1][gj1] = 1
+            self.fixed[gi2][gj2] = 1
+
+        else:
+            raise NotImplementedError("(^ω^#)")
 
 
 def compute_dsu_maxtree_bs(inputs, tiles):
@@ -738,10 +762,21 @@ def dfs_simulate_tiles(inputs):
             counter[t] -= 1
         
 
+
+    for i in range(N):
+        for j in range(N):
+            if tiles[i][j] > 0:
+                continue
+            keys = [k for k in range(16) if counter[k] > 0]
+            if keys:
+                t = random.choice(keys)
+                tiles[i][j] = t
+                counter[t] -= 1
+
     dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
     size = 0
-    for i in range(N - 1):
-        for j in range(N - 1):
+    for i in range(N):
+        for j in range(N):
             size += bs[i][j]
 
     return tiles, size
@@ -788,11 +823,22 @@ def bfs_simulate_tiles(inputs, type_ = "random"):
             
             
             if not keys:
+                for i in range(N):
+                    for j in range(N):
+                        if tiles[i][j] >= 0:
+                            continue
+                        keys = [k for k in range(16) if counter[k] > 0]
+                        if keys:
+                            t = random.choice(keys)
+                            tiles[i][j] = t
+                            counter[t] -= 1
+
                 dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
                 size = 0
-                for i in range(N - 1):
-                    for j in range(N - 1):
+                for i in range(N):
+                    for j in range(N):
                         size += bs[i][j]
+
                 return tiles, size
 
             t = random.choice(keys)
@@ -801,12 +847,21 @@ def bfs_simulate_tiles(inputs, type_ = "random"):
             ls.append((i2, j2, t, d + 1))
             counter[t] -= 1
 
+    for i in range(N):
+        for j in range(N):
+            if tiles[i][j] > 0:
+                continue
+            keys = [k for k in range(16) if counter[k] > 0]
+            if keys:
+                t = random.choice(keys)
+                tiles[i][j] = t
+                counter[t] -= 1
+
     dsu, max_tree, bs = compute_dsu_maxtree_bs(inputs, tiles)
     size = 0
-    for i in range(N - 1):
-        for j in range(N - 1):
+    for i in range(N):
+        for j in range(N):
             size += bs[i][j]
-
 
     return tiles, size
 
@@ -880,12 +935,17 @@ def simulate_tiles(inputs):
 def get_selection_priority(inputs):
     N = inputs.N
     ret = []
-    for i in range(N - 1):
-        for j in range(N - 1):
+    for i in range(N - 2):
+        for j in range(N - 2):
             ret.append((i, j))
     ret.sort(key=lambda x: (x[0] + x[1], x[0] ** 2 + x[1] ** 2))
 
-    return ret
+    ret2 = []
+    for i in range(N - 1):
+        ret2.append(((N - 2, i), (N - 1, i)))
+        ret2.append(((i, N - 2), (i, N - 1)))
+
+    return ret + ret2
 
 
 def main():
@@ -906,8 +966,8 @@ def main():
     max_sim_tiles = None
     max_size = 0
 
-    while perf_counter() - START < 1.5:
-        sim_tiles, size = bfs_simulate_tiles(inputs)
+    while perf_counter() - START < 2.0:
+        sim_tiles, size = dfs_simulate_tiles(inputs)
         if size >= max_size:
             max_size = size
             max_sim_tiles = sim_tiles
@@ -920,10 +980,17 @@ def main():
         sep="\n",
         file=sys.stderr,
     )
-    for i, j in selection_priority:
-        if max_sim_tiles[i][j] == 0:
-            continue
-        sim.operate2(i, j, max_sim_tiles[i][j])
+    print("#" * 30, file=sys.stderr)
+    print(selection_priority, file=sys.stderr)
+    for priority in selection_priority:
+        if isinstance(priority[0], int):
+            i, j = priority
+            if max_sim_tiles[i][j] == 0:
+                continue
+            sim.operate2(i, j, max_sim_tiles[i][j])
+        else:
+            (i1, j1), (i2, j2) = priority
+            sim.operate3(i1, j1, max_sim_tiles[i1][j1], i2, j2, max_sim_tiles[i2][j2])
 
     print("#" * 30, file=sys.stderr)
     print(
@@ -931,6 +998,12 @@ def main():
         sep="\n",
         file=sys.stderr,
     )
+
+    counter2 = Counter(sum(max_sim_tiles, []))
+    for k in counter.keys():
+        if k == 0:
+            continue
+        print(f"counter[{k}]: {counter[k]}, counter2[{k}]: {counter2[k]}", file=sys.stderr)
 
     assert sim.turn == len(sim.move_str)
 
