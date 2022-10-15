@@ -24,5 +24,5 @@ RUN pip install --upgrade pip \
     && pip install numba==0.48.0 \
     && pip install networkx==2.4 \
     && pip install pylint \
-    && pip install autopep8 \ 
+    && pip install black \ 
     && pip install online-judge-tools

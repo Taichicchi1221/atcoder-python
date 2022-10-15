@@ -4,7 +4,4 @@
 			"path": "."
 		}
 	],
-	"settings": {
-		"code-runner.preserveFocus": false
-	}
 }
