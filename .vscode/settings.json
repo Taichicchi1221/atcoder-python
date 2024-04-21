@@ -1,12 +1,31 @@
 {
-    "python.pythonPath": "/usr/local/bin/python",
-    "editor.formatOnSave": true,
-    "code-runner.preserveFocus": false,
     "code-runner.clearPreviousOutput": true,
     "code-runner.runInTerminal": true,
-    "docker.languageserver.formatter.ignoreMultilineInstructions": true,
-    "editor.formatOnPaste": true,
-    "editor.formatOnType": true,
-    "python.formatting.provider": "black",
-    "python.analysis.typeCheckingMode": "off"
+    "code-runner.fileDirectoryAsCwd": true,
+    "code-runner.ignoreSelection": true,
+    "code-runner.saveFileBeforeRun": true,
+    "workbench.tree.enableStickyScroll": false,
+    "editor.stickyScroll.enabled": true,
+    "ruff.organizeImports": false,
+    "isort.check": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "notebook.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[dockerfile]": {
+        "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+    },
+    "code-runner.executorMap": {
+        "python": "python -u $fullFileName",
+    },
 }

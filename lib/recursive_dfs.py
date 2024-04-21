@@ -1,8 +1,10 @@
 import sys
-sys.setrecursionlimit(10 ** 6)
+
+sys.setrecursionlimit(10**6)
 
 try:
     import pypyjit
+
     pypyjit.set_param("max_unroll_recursion=-1")
 except ModuleNotFoundError:
     pass

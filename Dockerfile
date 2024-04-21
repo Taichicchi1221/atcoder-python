@@ -1,5 +1,5 @@
-FROM python:3.8
-ARG USERNAME=vscode
+FROM python:3.10-slim-bullseye
+ARG USERNAME=atcoder
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
@@ -16,13 +16,9 @@ RUN apt-get update \
 
 ENV PATH /home/vscode/.local/bin:$PATH
 
+COPY requirements.txt .
+
 # install python packages
-RUN pip install --upgrade pip \
-    && pip install numpy==1.18.2 \
-    && pip install scipy==1.4.1 \
-    && pip install scikit-learn==0.22.2.post1 \
-    && pip install numba==0.48.0 \
-    && pip install networkx==2.4 \
-    && pip install pylint \
-    && pip install black \ 
-    && pip install online-judge-tools
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+RUN pip install git+https://github.com/not522/ac-library-python

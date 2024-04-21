@@ -10,10 +10,12 @@ def _ceil_pow2(n: int) -> int:
 
 
 class SegTree:
-    def __init__(self,
-                 op: typing.Callable[[typing.Any, typing.Any], typing.Any],
-                 e: typing.Any,
-                 v: typing.Union[int, typing.List[typing.Any]]) -> None:
+    def __init__(
+        self,
+        op: typing.Callable[[typing.Any, typing.Any], typing.Any],
+        e: typing.Any,
+        v: typing.Union[int, typing.List[typing.Any]],
+    ) -> None:
         self._op = op
         self._e = e
 
@@ -30,7 +32,11 @@ class SegTree:
         for i in range(self._size - 1, 0, -1):
             self._update(i)
 
-    def set(self, p: int, x: typing.Any) -> None:
+    def set(
+        self,
+        p: int,
+        x: typing.Any,
+    ) -> None:
         assert 0 <= p < self._n
 
         p += self._size
@@ -38,12 +44,19 @@ class SegTree:
         for i in range(1, self._log + 1):
             self._update(p >> i)
 
-    def get(self, p: int) -> typing.Any:
+    def get(
+        self,
+        p: int,
+    ) -> typing.Any:
         assert 0 <= p < self._n
 
         return self._d[p + self._size]
 
-    def prod(self, left: int, right: int) -> typing.Any:
+    def prod(
+        self,
+        left: int,
+        right: int,
+    ) -> typing.Any:
         assert 0 <= left <= right <= self._n
         sml = self._e
         smr = self._e
@@ -65,8 +78,11 @@ class SegTree:
     def all_prod(self) -> typing.Any:
         return self._d[1]
 
-    def max_right(self, left: int,
-                  f: typing.Callable[[typing.Any], bool]) -> int:
+    def max_right(
+        self,
+        left: int,
+        f: typing.Callable[[typing.Any], bool],
+    ) -> int:
         assert 0 <= left <= self._n
         assert f(self._e)
 
@@ -93,8 +109,11 @@ class SegTree:
 
         return self._n
 
-    def min_left(self, right: int,
-                 f: typing.Callable[[typing.Any], bool]) -> int:
+    def min_left(
+        self,
+        right: int,
+        f: typing.Callable[[typing.Any], bool],
+    ) -> int:
         assert 0 <= right <= self._n
         assert f(self._e)
 
@@ -121,5 +140,8 @@ class SegTree:
 
         return 0
 
-    def _update(self, k: int) -> None:
+    def _update(
+        self,
+        k: int,
+    ) -> None:
         self._d[k] = self._op(self._d[2 * k], self._d[2 * k + 1])
